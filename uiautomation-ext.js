@@ -169,87 +169,44 @@ extend(UIAKeyboard.prototype,{
 	            return this.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION;
 	        else
 	            return this.KEYBOARD_TYPE_UNKNOWN;
-	    }
+	    },
 	
+	/**
+	 * A wrapper around typeString which feeds the characters to be typed 
+	 * to typeString one-by-one.
+	 *
+	 * When typeString is directly invoked with a string of length > 1,
+	 * Instruments throws a "tap point is required" error after the first character 
+	 * is typed. Typing the characters one-by-one is no slower 
+	 * and works around the error.
+	 *
+	 * @param {String} string The string to be typed.
+	 */
+	s9TypeString: function(string) {
+		for (charIndex = 0; charIndex<string.length; charIndex++) {
+			this.typeString(string.charAt(charIndex));
+		}
+	}
 });
 
-/*
-TODO: Character keyboard is super slow.
-*/
-var typeString = function(pstrString, pbClear)
-{
-	pstrString += ''; // convert number to string 
+/**
+ * Types the specified string into the element character-by-character.
+ *
+ * This function causes the element to become first responder, 
+ * then invokes UIAKeyboard.s9TypeString.
+ *
+ * @param {String} string The string to be typed.
+ */
+var typeString = function(string) {
+	this.tap();							// to become firstResponder
 	
-	if (!this.hasKeyboardFocus())
-        this.tap();
-
-    UIATarget.localTarget().delay(0.5);
-
-    if (pbClear || pstrString.length == 0)
-        this.clear();
-
-    if (pstrString.length > 0)
-    {
-        var app = UIATarget.localTarget().frontMostApp();
-        var keyboard = app.keyboard();
-        var keys = app.keyboard().keys();
-        var buttons = app.keyboard().buttons();
-        for (i = 0; i < pstrString.length; i++)
-        {
-	        var intKeyboardType = keyboard.keyboardType();
-	        var bIsAllCaps = (intKeyboardType == keyboard.KEYBOARD_TYPE_ALPHA_CAPS); //Handles autocapitalizationType = UITextAutocapitalizationTypeAllCharacters
-	        var intNewKeyboardType = intKeyboardType;
-            var strChar = pstrString.charAt(i);
-            if ((/[a-z]/.test(strChar)) && intKeyboardType == keyboard.KEYBOARD_TYPE_ALPHA_CAPS && !bIsAllCaps)
-            {
-                buttons.firstWithName("shift").tap();
-                intKeyboardType = keyboard.KEYBOARD_TYPE_ALPHA;
-            }
-            else if ((/[A-Z]/.test(strChar)) && intKeyboardType == keyboard.KEYBOARD_TYPE_ALPHA)
-            {
-                buttons.firstWithName("shift").tap();
-                intKeyboardType = keyboard.KEYBOARD_TYPE_ALPHA_CAPS;
-            }
-            else if ((/[A-z]/.test(strChar)) && intKeyboardType == keyboard.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION)
-            {
-                buttons.firstWithName("more, letters").tap();
-                intKeyboardType = keyboard.KEYBOARD_TYPE_ALPHA;
-            }
-            else if ((/[0-9.]/.test(strChar)) && intKeyboardType != keyboard.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION && intKeyboardType != keyboard.KEYBOARD_TYPE_NUMBER)
-            {
-                buttons.firstWithName("more, numbers").tap();
-                intKeyboardType = keyboard.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION;
-            }
-
-            if ((/[a-z]/.test(strChar)) && intKeyboardType == keyboard.KEYBOARD_TYPE_ALPHA_CAPS)
-                strChar = strChar.toUpperCase();
-            if (strChar == " ")
-                keys["space"].tap();
-            else if (/[0-9]/.test(strChar)) // Need to change strChar to the index key of the number because strChar = "0" will tap "1" and strChar = "1" will tap "2"
-            {
-               	if (strChar == "0")
-					if (intKeyboardType == keyboard.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION){
-                    	strChar = "9";
-					}
-					else{
-						strChar = "10";
-					}
-               	else
-                   	strChar = (parseInt(strChar) - 1).toString();	
-
-                keys[strChar].tap();
-            }
-            else{
-                keys[strChar].tap(); // TODO: this line is super slow when there are many keys
-			}
-            UIATarget.localTarget().delay(0.5);
-
-        }
-    }
+	var kbd = UIATarget.localTarget().frontMostApp().keyboard();
+	kbd.waitUntilVisible(3);
+	kbd.s9TypeString(string);
 };
 
 extend(UIATextField.prototype,{
-	typeString: typeString,
+	typeString: typeString
 });
 extend(UIATextView.prototype,{
 	typeString: typeString
