@@ -150,26 +150,48 @@ extend(UIATarget.prototype, {
       return this.model().match(/^iPhone/) !== null;
     }
 });
+
+
+/// *** S9AKeyboard
+
 extend(UIAKeyboard.prototype,{
 	KEYBOARD_TYPE_UNKNOWN :-1,
 	KEYBOARD_TYPE_ALPHA : 0,
 	KEYBOARD_TYPE_ALPHA_CAPS : 1,
 	KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION:2,
 	KEYBOARD_TYPE_NUMBER:3,
-	keyboardType : function()
-	    {
-			if (this.keys().length < 12){
-	            return this.KEYBOARD_TYPE_NUMBER;
-			}
-	        else if (this.keys().firstWithName("a").toString() != "[object UIAElementNil]")
-	            return this.KEYBOARD_TYPE_ALPHA;
-	        else if (this.keys().firstWithName("A").toString() != "[object UIAElementNil]")
-	            return this.KEYBOARD_TYPE_ALPHA_CAPS;
-	        else if (this.keys().firstWithName("1").toString() != "[object UIAElementNil]")
-	            return this.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION;
-	        else
-	            return this.KEYBOARD_TYPE_UNKNOWN;
-	    },
+	keyboardType : function() {
+		if (this.keys().length < 12){
+            return this.KEYBOARD_TYPE_NUMBER;
+		}
+        else if (this.keys().firstWithName("a").toString() != "[object UIAElementNil]")
+            return this.KEYBOARD_TYPE_ALPHA;
+        else if (this.keys().firstWithName("A").toString() != "[object UIAElementNil]")
+            return this.KEYBOARD_TYPE_ALPHA_CAPS;
+        else if (this.keys().firstWithName("1").toString() != "[object UIAElementNil]")
+            return this.KEYBOARD_TYPE_NUMBER_AND_PUNCTUATION;
+        else
+            return this.KEYBOARD_TYPE_UNKNOWN;
+    },
+	
+	/**
+	 * A convenience method for tapping a key.
+	 *
+	 * This method does nothing if the keyboard does not have a key
+	 * with the specified label.
+	 *
+	 * This method delays slightly before returning
+	 * to ensure that chained keypresses register.
+	 *
+	 * @param {String} keyLabel The string label of a key.
+	 */
+	 keyPress: function(keyLabel) {
+		var key = this.buttons()[keyLabel];
+		if (key.isValid()) {
+			key.tap();
+			UIATarget.localTarget().delay(0.5);
+		}
+	 },
 	
 	/**
 	 * A wrapper around typeString which feeds the characters to be typed 
@@ -186,14 +208,45 @@ extend(UIAKeyboard.prototype,{
 		for (charIndex = 0; charIndex<string.length; charIndex++) {
 			this.typeString(string.charAt(charIndex));
 		}
+	},
+	
+	/**
+	 * A convenience method to tap the "hide" button.
+	 */
+	hide: function() {
+		this.keyPress("Hide keyboard");
 	}
 });
+/**
+ *	A convenience accessor for the keyboard.
+ *  Note that this method waits for the keyboard to become visible before returning it.
+ */
+var S9AKeyboard = function() { 
+	var kbd = UIATarget.localTarget().frontMostApp().keyboard();
+	kbd.waitUntilVisible(3);
+	return kbd;
+};
+
+
+/// *** S9ATextField and S9ATextView
+
+/**
+ * A wrapper for setValue which dismisses the keyboard afterward.
+ *
+ * @param {String} value The string that is to be the new value.
+ */
+var s9SetValue = function(value) {
+	this.setValue(value);
+	S9AKeyboard().hide();
+};
 
 /**
  * Types the specified string into the element character-by-character.
+ * (as opposed to simply setting it using s9SetValue).
  *
  * This function causes the element to become first responder, 
  * then invokes UIAKeyboard.s9TypeString.
+ * Unlike s9SetValue, this does not hide the keyboard afterward.
  *
  * @param {String} string The string to be typed.
  */
@@ -205,9 +258,20 @@ var typeString = function(string) {
 	kbd.s9TypeString(string);
 };
 
+/**
+ * Clears this element of text
+ */
+var clear = function() {
+	this.s9SetValue("");
+};
+
 extend(UIATextField.prototype,{
-	typeString: typeString
+	s9SetValue: s9SetValue,
+	typeString: typeString,
+	clear: clear
 });
 extend(UIATextView.prototype,{
-	typeString: typeString
+	s9SetValue: s9SetValue,
+	typeString: typeString,
+	clear: clear
 });
