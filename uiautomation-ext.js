@@ -152,6 +152,52 @@ extend(UIATarget.prototype, {
 });
 
 
+/// *** S9AEditingMenu
+
+// Selectors for various menu items
+// i.e. values that can be used to retrieve UIAMenuItems via this.elements()[value]
+S9AEditingMenuActionValue = {
+	copy : "Copy",
+	paste : "Paste",
+	selectAll : "Select All",
+	define : "Define"
+}
+extend(UIAEditingMenu.prototype, {
+	/**
+	 * Taps the menu item identified by actionValue
+	 *
+	 * @param {String} actionValue The name of the menu item.
+	 * @returns {Boolean} true iff actionValue identifies a menu item present in the menu
+	 */
+	performAction: function(actionValue) {
+		var didPerformAction = false;
+
+		// the editing menu may contain multiple items with the same name (one system, one custom), 
+		// only one of which is actually visible in the menu (has a non-zero size),
+		// so we must search through the array rather than retrieving the item by name
+		var menuItem = this.elements().toArray().contains(function(item) {
+			return ((item.name() == actionValue) && (item.rect().size.width > 0));
+		});
+		if (menuItem.isValid()) {
+			menuItem.tap();
+			didPerformAction = true;
+		}
+		return didPerformAction;
+	}
+});
+/**
+ *	A convenience accessor for the shared editing menu.
+ *  Note that this method waits for the menu to become visible before returning it.
+ *
+ *	@returns {UIAEditingMenu} The editing menu.
+ */
+var S9AEditingMenu = function() { 
+	var em = UIATarget.localTarget().frontMostApp().editingMenu();
+	em.waitUntilVisible(3);
+	return em;
+};
+
+
 /// *** S9AKeyboard
 
 extend(UIAKeyboard.prototype,{
