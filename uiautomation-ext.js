@@ -198,6 +198,75 @@ var S9AEditingMenu = function() {
 };
 
 
+/// *** S9AWebView
+
+// to be extended by tests with reference to appropriate static text selectors
+// i.e. values that can be used to retrieve UIAStaticTexts via this.elements()[value]
+S9AWebViewSelectionValue = {
+}
+extend(UIAWebView.prototype, {
+	/**
+	 * Selects the static text element identified by selectionValue
+	 *
+	 * @param {String} selectionValue The value of the static text element to be selected.
+	 * @returns {Boolean} true iff selectionValue identified a valid static text element
+	 */
+	select: function(selectionValue) {
+		var didSelect = false;
+		
+		var text = this.elements()[selectionValue];
+		if (text.isValid()) {
+			text.touchAndHold(1);		
+			didSelect = true;
+		}
+		return didSelect;
+	},
+	
+	/**
+	 * Dismisses any selection by tapping on the first static text element in the webview
+	 * (Tapping on the webview itself sometimes causes the webview to jump to the end of the page.)
+	 */
+	dismissSelection: function() {
+		this.staticTexts()[0].tap();
+		UIATarget.localTarget().delay(1);
+	},
+
+	/**
+	 * Selects the static text element identified by selectionValue
+	 * then invokes the "copy" action from the editing menu
+	 *
+	 * @param {String} selectionValue The value of the static text element to be copied.
+	 * @returns {Boolean} true iff selectionValue identified a valid static text element
+	 *			and "copy" could be invoked on the selection
+	 */
+	copy: function(selectionValue) {
+		var didCopy = false;
+		
+		if (this.select(selectionValue)) {
+			didCopy = S9AEditingMenu().performAction(S9AEditingMenuActionValue.copy);
+		}
+		return didCopy;
+	},
+	
+	/**
+	 * Selects the static text element identified by selectionValue
+	 * then invokes the "define" action from the editing menu
+	 *
+	 * @param {String} selectionValue The value of the static text element to be defined.
+	 * @returns true iff selectionValue identified a valid static text element
+	 *			and "define" could be invoked on the selection
+	 */
+	define: function(selectionValue) {
+		var didDefine = false;
+		
+		if (this.select(selectionValue)) {
+			didDefine = S9AEditingMenu().performAction(S9AEditingMenuActionValue.define);
+		}
+		return didDefine;
+	}
+});
+
+
 /// *** S9AKeyboard
 
 extend(UIAKeyboard.prototype,{
