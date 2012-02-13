@@ -403,3 +403,49 @@ extend(UIATextView.prototype,{
 	typeString: typeString,
 	clear: clear
 });
+
+
+/// *** Miscellaneous Functions
+
+/**
+ * 	Given a string representation of a rect, 
+ *	returns an object of the same structure 
+ *	as is returned by UIAElement.rect()
+ *
+ *	@param {String} stringRect 	A string representation of a rect
+ *								of the format "{{x, y},{width,height}}"
+ *								(with arbitrary spacing)
+ *	@returns {Rect} A rect initialized from stringRect 
+ *					if stringRect is of the expected format,
+ *					null otherwise.
+ */
+function rectFromString(stringRect) {
+	var rect = null;
+
+	var rectRegexp = /^\{\s*\{\s*([0-9]+)\s*,\s*([0-9]+)\s*\}\s*,\s*\{\s*([0-9]+)\s*,\s*([0-9]+)\s*\}\s*\}$/;
+	var rectMatch = rectRegexp.exec(stringRect);
+	if (rectMatch) {
+		rect = {origin:{},size:{}};
+		rect.origin.x = rectMatch[1];
+		rect.origin.y = rectMatch[2];
+		rect.size.width = rectMatch[3];
+		rect.size.height = rectMatch[4];
+	}
+
+	return rect;
+}
+
+/**
+ *	Given a rect object (e.g. from UIAElement.rect()), 
+ *	returns its string representation
+ *
+ *	@param {Rect} rect A rect.
+ *	@returns {String}	The string representation of rect,
+ *						of the format "{{x, y},{width,height}}"
+ */
+function stringFromRect(rect) {
+	var stringRect = 
+	"{{" + rect.origin.x + "," + rect.origin.y + "}" + "," 
+	+ "{" + rect.size.width + "," + rect.size.height + "}}";
+	return stringRect;
+}
