@@ -277,6 +277,17 @@ var S9AKeyboard = function() {
 /// *** S9ATextField and S9ATextView
 
 /**
+ * Pastes the contents of the clipboard into this element
+ */
+var paste = function() {
+	this.tap();							// to become firstResponder
+	UIATarget.localTarget().delay(1);	// the touchAndHold is not registered immediately after the tap
+	this.touchAndHold(1);
+	
+	S9AEditingMenu().performAction(S9AEditingMenuActionValue.paste);
+};
+
+/**
  * A wrapper for setValue which dismisses the keyboard afterward.
  *
  * @param {String} value The string that is to be the new value.
@@ -312,11 +323,13 @@ var clear = function() {
 };
 
 extend(UIATextField.prototype,{
+	paste: paste,
 	s9SetValue: s9SetValue,
 	typeString: typeString,
 	clear: clear
 });
 extend(UIATextView.prototype,{
+	paste: paste,
 	s9SetValue: s9SetValue,
 	typeString: typeString,
 	clear: clear
